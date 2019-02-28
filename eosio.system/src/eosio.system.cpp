@@ -444,6 +444,10 @@ namespace eosiosystem {
          m.quote.balance.symbol = core;
       });
    }
+
+   void system_contract::updtbwlist(uint8_t type, const std::vector<std::string>& add, const std::vector<std::string>& rmv) {
+      update_blackwhitelist();
+   }
 } /// eosio.system
 
 
@@ -452,7 +456,7 @@ EOSIO_DISPATCH( eosiosystem::system_contract,
      (newaccount)(updateauth)(deleteauth)(linkauth)(unlinkauth)(canceldelay)(onerror)(setabi)
      // eosio.system.cpp
      (init)(setram)(setramrate)(setparams)(setpriv)(setalimits)(setacctram)(setacctnet)(setacctcpu)
-     (rmvproducer)(updtrevision)(bidname)(bidrefund)
+     (rmvproducer)(updtrevision)(bidname)(bidrefund)(updtbwlist)
      // delegate_bandwidth.cpp
      (buyrambytes)(buyram)(sellram)(delegatebw)(undelegatebw)(refund)
      // voting.cpp

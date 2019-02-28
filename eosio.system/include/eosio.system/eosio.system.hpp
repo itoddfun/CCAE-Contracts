@@ -354,6 +354,22 @@ namespace eosiosystem {
          [[eosio::action]]
          void bidrefund( name bidder, name newname );
 
+         /**
+          * Update black & white list
+          * @param type: target type.
+          *              0: sender_bypass_whiteblacklist
+          *              1: actor_whitelist
+          *              2: actor_blacklist
+          *              3: contract_whitelist
+          *              4: contract_blacklist
+          *              5: action_blacklist (item must be formatted as <contract>:<action>)
+          *              6: key_blacklist (item must be public key)
+          * @param add: items to add
+          * @param rmv: items to remove
+          */
+         [[eosio::action]]
+         void updtbwlist(uint8_t type, const std::vector<std::string>& add, const std::vector<std::string>& rmv);
+
       private:
          // Implementation details:
 
