@@ -93,9 +93,9 @@ namespace eosiosystem {
       auto idx = _producers.get_index<"prototalvote"_n>();
 
       std::vector< std::pair<eosio::producer_key,uint16_t> > top_producers;
-      top_producers.reserve(21);
+      top_producers.reserve(_gstate.max_producer_schedule_size);
 
-      for ( auto it = idx.cbegin(); it != idx.cend() && top_producers.size() < 21 && 0 < it->total_votes && it->active(); ++it ) {
+      for ( auto it = idx.cbegin(); it != idx.cend() && top_producers.size() < _gstate.max_producer_schedule_size && 0 < it->total_votes && it->active(); ++it ) {
          top_producers.emplace_back( std::pair<eosio::producer_key,uint16_t>({{it->owner, it->producer_key}, it->location}) );
       }
 
@@ -220,7 +220,7 @@ namespace eosiosystem {
        */
       if( voter->last_vote_weight <= 0.0 ) {
          _gstate.total_activated_stake += voter->staked;
-         if( _gstate.total_activated_stake >= min_activated_stake && _gstate.thresh_activated_stake_time == time_point() ) {
+         if( _gstate.total_activated_stake >= _gstate.min_activated_stake && _gstate.thresh_activated_stake_time == time_point() ) {
             _gstate.thresh_activated_stake_time = current_time_point();
          }
       }
@@ -237,6 +237,7 @@ namespace eosiosystem {
             eosio_assert( old_proxy != _voters.end(), "old proxy not found" ); //data corruption
             _voters.modify( old_proxy, same_payer, [&]( auto& vp ) {
                   vp.proxied_vote_weight -= voter->last_vote_weight;
+                  vp.last_change_time = current_time_point();
                });
             propagate_weight_change( *old_proxy );
          } else {
@@ -255,6 +256,7 @@ namespace eosiosystem {
          if ( new_vote_weight >= 0 ) {
             _voters.modify( new_proxy, same_payer, [&]( auto& vp ) {
                   vp.proxied_vote_weight += new_vote_weight;
+                  vp.last_change_time = current_time_point();
                });
             propagate_weight_change( *new_proxy );
          }
@@ -315,6 +317,7 @@ namespace eosiosystem {
          av.last_vote_weight = new_vote_weight;
          av.producers = producers;
          av.proxy     = proxy;
+         av.last_change_time = ct;
       });
    }
 
@@ -336,12 +339,14 @@ namespace eosiosystem {
          eosio_assert( !isproxy || !pitr->proxy, "account that uses a proxy is not allowed to become a proxy" );
          _voters.modify( pitr, same_payer, [&]( auto& p ) {
                p.is_proxy = isproxy;
+               p.last_change_time = current_time_point();
             });
          propagate_weight_change( *pitr );
       } else {
          _voters.emplace( proxy, [&]( auto& p ) {
                p.owner  = proxy;
                p.is_proxy = isproxy;
+               p.last_change_time = current_time_point();
             });
       }
    }
@@ -359,6 +364,7 @@ namespace eosiosystem {
             auto& proxy = _voters.get( voter.proxy.value, "proxy not found" ); //data corruption
             _voters.modify( proxy, same_payer, [&]( auto& p ) {
                   p.proxied_vote_weight += new_weight - voter.last_vote_weight;
+                  p.last_change_time = current_time_point();
                }
             );
             propagate_weight_change( proxy );
@@ -401,6 +407,7 @@ namespace eosiosystem {
       }
       _voters.modify( voter, same_payer, [&]( auto& v ) {
             v.last_vote_weight = new_weight;
+            v.last_change_time = current_time_point();
          }
       );
    }
