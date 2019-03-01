@@ -160,6 +160,7 @@ namespace eosiosystem {
 
          _voters.modify( vitr, same_payer, [&]( auto& v ) {
             v.flags1 = set_field( v.flags1, voter_info::flags1_fields::ram_managed, false );
+            v.last_change_time = current_time_point();
          });
       } else {
          eosio_assert( *ram_bytes >= 0, "not allowed to set RAM limit to unlimited" );
@@ -168,11 +169,13 @@ namespace eosiosystem {
          if ( vitr != _voters.end() ) {
             _voters.modify( vitr, same_payer, [&]( auto& v ) {
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::ram_managed, true );
+               v.last_change_time = current_time_point();
             });
          } else {
             _voters.emplace( account, [&]( auto& v ) {
                v.owner  = account;
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::ram_managed, true );
+               v.last_change_time = current_time_point();
             });
          }
 
@@ -204,6 +207,7 @@ namespace eosiosystem {
 
          _voters.modify( vitr, same_payer, [&]( auto& v ) {
             v.flags1 = set_field( v.flags1, voter_info::flags1_fields::net_managed, false );
+            v.last_change_time = current_time_point();
          });
       } else {
          eosio_assert( *net_weight >= -1, "invalid value for net_weight" );
@@ -212,11 +216,13 @@ namespace eosiosystem {
          if ( vitr != _voters.end() ) {
             _voters.modify( vitr, same_payer, [&]( auto& v ) {
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::net_managed, true );
+               v.last_change_time = current_time_point();
             });
          } else {
             _voters.emplace( account, [&]( auto& v ) {
                v.owner  = account;
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::net_managed, true );
+               v.last_change_time = current_time_point();
             });
          }
 
@@ -248,6 +254,7 @@ namespace eosiosystem {
 
          _voters.modify( vitr, same_payer, [&]( auto& v ) {
             v.flags1 = set_field( v.flags1, voter_info::flags1_fields::cpu_managed, false );
+            v.last_change_time = current_time_point();
          });
       } else {
          eosio_assert( *cpu_weight >= -1, "invalid value for cpu_weight" );
@@ -256,11 +263,13 @@ namespace eosiosystem {
          if ( vitr != _voters.end() ) {
             _voters.modify( vitr, same_payer, [&]( auto& v ) {
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::cpu_managed, true );
+               v.last_change_time = current_time_point();
             });
          } else {
             _voters.emplace( account, [&]( auto& v ) {
                v.owner  = account;
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::cpu_managed, true );
+               v.last_change_time = current_time_point();
             });
          }
 
