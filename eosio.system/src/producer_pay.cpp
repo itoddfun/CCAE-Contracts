@@ -224,7 +224,7 @@ namespace eosiosystem {
       const auto& voter = _voters.get(owner.value);
 
       const auto ct = current_time_point();
-      eosio_assert( ct - voter.last_change_time > microseconds(useconds_per_day), "already claimed bonus or voted producers within past day" );
+      eosio_assert( ct - voter.last_change_time > microseconds(useconds_per_day), "already claimed bonus or voted producers or delegated/undelegated within past day" );
 
       double vote_weight = voter.last_vote_weight;
       if (voter.is_proxy) {
@@ -235,9 +235,14 @@ namespace eosiosystem {
       if (voter.proxy) {
          const auto& proxy = _voters.get(voter.proxy.value);
          producers = proxy.producers;
+         // TODO: should consider proxy's last_change_time?
       } else {
          producers = voter.producers;
       }
+
+      _voters.modify( voter, same_payer, [&]( auto& v ) {
+         v.last_change_time = ct;
+      });
 
       int64_t amount = 0;
       for (auto& p: producers) {
