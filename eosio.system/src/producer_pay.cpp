@@ -205,7 +205,7 @@ namespace eosiosystem {
                   });
                } else {
                   _voterbonus.modify( vb_itr, _self, [&]( auto& vb ) {
-                      vb.balance = asset(voter_bonus_pay, core_symbol());
+                      vb.balance += asset(voter_bonus_pay, core_symbol());
                   });
                }
             }
