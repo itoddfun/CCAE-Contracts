@@ -211,10 +211,12 @@ namespace eosiosystem {
             }
          }
 
-         INLINE_ACTION_SENDER(eosio::token, transfer)(
-            token_account, { {vpay_account, active_permission}, {owner, active_permission} },
-            { vpay_account, owner, asset(producer_per_vote_pay, core_symbol()), std::string("producer vote pay") }
-         );
+         if (producer_per_vote_pay > 0) {
+            INLINE_ACTION_SENDER(eosio::token, transfer)(
+               token_account, { {vpay_account, active_permission}, {owner, active_permission} },
+               { vpay_account, owner, asset(producer_per_vote_pay, core_symbol()), std::string("producer vote pay") }
+            );
+         }
       }
    }
 
