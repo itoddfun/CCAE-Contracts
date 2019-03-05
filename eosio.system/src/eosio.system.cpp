@@ -480,25 +480,25 @@ namespace eosiosystem {
 
          _gstate.min_activated_stake = min_activated_stake;
       } else if ( name == "continuous_rate") {
-         auto rate = std::stod(value);
+         auto rate = static_cast<double>(std::stoi(value)) / 1e6;
 
          eosio_assert( rate >= 0 && rate <= 1, "continuous rate must be in range [0, 1]" ); // TODO
 
          _gstate.continuous_rate = rate;
       } else if ( name == "to_producers_rate") {
-         auto rate = std::stod(value);
+         auto rate = static_cast<double>(std::stoi(value)) / 1e6;
 
          eosio_assert( rate >= 0 && rate <= 1, "to_producers_rate must be in range [0, 1]" ); // TODO
 
          _gstate.to_producers_rate = rate;
       } else if ( name == "to_bpay_rate") {
-         auto rate = std::stod(value);
+         auto rate = static_cast<double>(std::stoi(value)) / 1e6;
 
          eosio_assert( rate >= 0 && rate <= 1, "to_bpay_rate must be in range [0, 1]" ); // TODO
 
          _gstate.to_bpay_rate = rate;
       } else if ( name == "to_voter_bonus_rate" ) {
-         auto rate = std::stod(value);
+         auto rate = static_cast<double>(std::stoi(value)) / 1e6;
 
          eosio_assert( rate >= 0 && rate <= 1, "to_voter_bonus_rate must be in range [0, 1]" ); // TODO
 
