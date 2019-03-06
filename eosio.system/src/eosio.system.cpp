@@ -458,6 +458,15 @@ namespace eosiosystem {
    void system_contract::setglobal( std::string name, std::string value ) {
       require_auth( _self );
 
+      if ( name == "to_voter_bonus_rate" ) {
+         auto rate = static_cast<double>(std::stoi(value)) / 1e6;
+
+         eosio_assert( rate >= 0 && rate <= 1, "to_voter_bonus_rate must be in range [0, 1]" ); // TODO
+
+         _gstate.to_voter_bonus_rate = rate;
+         return;
+      }
+
       eosio_assert( _gstate.total_activated_stake < _gstate.min_activated_stake, "minimum activated stake has reached" );
 
       if (name == "max_producer_schedule_size") {
@@ -497,12 +506,6 @@ namespace eosiosystem {
          eosio_assert( rate >= 0 && rate <= 1, "to_bpay_rate must be in range [0, 1]" ); // TODO
 
          _gstate.to_bpay_rate = rate;
-      } else if ( name == "to_voter_bonus_rate" ) {
-         auto rate = static_cast<double>(std::stoi(value)) / 1e6;
-
-         eosio_assert( rate >= 0 && rate <= 1, "to_voter_bonus_rate must be in range [0, 1]" ); // TODO
-
-         _gstate.to_voter_bonus_rate = rate;
       } else if ( name == "refund_delay_sec" ) {
          auto refund_delay_sec = std::stoul(value);
 
