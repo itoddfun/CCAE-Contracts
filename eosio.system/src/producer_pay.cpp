@@ -199,12 +199,12 @@ namespace eosiosystem {
 
                auto vb_itr = _voterbonus.find(owner.value);
                if (vb_itr == _voterbonus.end()) {
-                  _voterbonus.emplace( _self, [&]( auto& vb ) {
+                  _voterbonus.emplace( owner, [&]( auto& vb ) {
                      vb.producer = owner;
                      vb.balance = asset(voter_bonus_pay, core_symbol());
                   });
                } else {
-                  _voterbonus.modify( vb_itr, _self, [&]( auto& vb ) {
+                  _voterbonus.modify( vb_itr, same_payer, [&]( auto& vb ) {
                       vb.balance += asset(voter_bonus_pay, core_symbol());
                   });
                }
@@ -250,7 +250,12 @@ namespace eosiosystem {
       for (auto& p: producers) {
          const auto& producer = _producers.get(p.value);
          const auto& voterbonus = _voterbonus.get(p.value);
-         amount += static_cast<int64_t>(voterbonus.balance.amount * vote_weight / producer.total_votes);
+         auto delta = static_cast<int64_t>(voterbonus.balance.amount * vote_weight / producer.total_votes);
+         if (delta <= 0) continue;
+         _voterbonus.modify( voterbonus, same_payer, [&]( auto& vb ) {
+             vb.balance -= asset(delta, core_symbol());
+         });
+         amount += delta;
       }
       if (amount > 0) {
          INLINE_ACTION_SENDER(eosio::token, transfer)(
