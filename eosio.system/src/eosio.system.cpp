@@ -13,6 +13,7 @@ namespace eosiosystem {
    system_contract::system_contract( name s, name code, datastream<const char*> ds )
    :native(s,code,ds),
     _voters(_self, _self.value),
+    _voterbonus(_self, _self.value),
     _producers(_self, _self.value),
     _producers2(_self, _self.value),
     _global(_self, _self.value),
@@ -152,13 +153,14 @@ namespace eosiosystem {
          user_resources_table userres( _self, account.value );
          auto ritr = userres.find( account.value );
 
-         ram = ram_gift_bytes;
+         ram = _gstate.ram_gift_bytes;
          if( ritr != userres.end() ) {
             ram += ritr->ram_bytes;
          }
 
          _voters.modify( vitr, same_payer, [&]( auto& v ) {
             v.flags1 = set_field( v.flags1, voter_info::flags1_fields::ram_managed, false );
+            v.last_change_time = current_time_point();
          });
       } else {
          eosio_assert( *ram_bytes >= 0, "not allowed to set RAM limit to unlimited" );
@@ -167,11 +169,13 @@ namespace eosiosystem {
          if ( vitr != _voters.end() ) {
             _voters.modify( vitr, same_payer, [&]( auto& v ) {
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::ram_managed, true );
+               v.last_change_time = current_time_point();
             });
          } else {
             _voters.emplace( account, [&]( auto& v ) {
                v.owner  = account;
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::ram_managed, true );
+               v.last_change_time = current_time_point();
             });
          }
 
@@ -203,6 +207,7 @@ namespace eosiosystem {
 
          _voters.modify( vitr, same_payer, [&]( auto& v ) {
             v.flags1 = set_field( v.flags1, voter_info::flags1_fields::net_managed, false );
+            v.last_change_time = current_time_point();
          });
       } else {
          eosio_assert( *net_weight >= -1, "invalid value for net_weight" );
@@ -211,11 +216,13 @@ namespace eosiosystem {
          if ( vitr != _voters.end() ) {
             _voters.modify( vitr, same_payer, [&]( auto& v ) {
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::net_managed, true );
+               v.last_change_time = current_time_point();
             });
          } else {
             _voters.emplace( account, [&]( auto& v ) {
                v.owner  = account;
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::net_managed, true );
+               v.last_change_time = current_time_point();
             });
          }
 
@@ -247,6 +254,7 @@ namespace eosiosystem {
 
          _voters.modify( vitr, same_payer, [&]( auto& v ) {
             v.flags1 = set_field( v.flags1, voter_info::flags1_fields::cpu_managed, false );
+            v.last_change_time = current_time_point();
          });
       } else {
          eosio_assert( *cpu_weight >= -1, "invalid value for cpu_weight" );
@@ -255,11 +263,13 @@ namespace eosiosystem {
          if ( vitr != _voters.end() ) {
             _voters.modify( vitr, same_payer, [&]( auto& v ) {
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::cpu_managed, true );
+               v.last_change_time = current_time_point();
             });
          } else {
             _voters.emplace( account, [&]( auto& v ) {
                v.owner  = account;
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::cpu_managed, true );
+               v.last_change_time = current_time_point();
             });
          }
 
@@ -445,7 +455,79 @@ namespace eosiosystem {
       });
    }
 
+   void system_contract::setglobal( std::string name, std::string value ) {
+      require_auth( _self );
+
+      if ( name == "to_voter_bonus_rate" ) {
+         auto rate = static_cast<double>(std::stoi(value)) / 1e6;
+
+         eosio_assert( rate >= 0 && rate <= 1, "to_voter_bonus_rate must be in range [0, 1]" ); // TODO
+
+         _gstate.to_voter_bonus_rate = rate;
+         return;
+      }
+
+      eosio_assert( _gstate.total_activated_stake < _gstate.min_activated_stake, "minimum activated stake has reached" );
+
+      if (name == "max_producer_schedule_size") {
+         auto sched_size = std::stoi(value);
+
+         eosio_assert( sched_size >= 3 && sched_size <= 51, "producers number must be in range [3, 51]" ); // TODO
+         eosio_assert( sched_size % 2 == 1, "producers number must be odd" );
+
+         _gstate.max_producer_schedule_size = static_cast<uint8_t>(sched_size);
+      } else if (name == "min_pervote_daily_pay") {
+         auto min_vpay = std::stoll(value);
+
+         eosio_assert( min_vpay >= 0 && min_vpay <= 100'0000, "minimum pervote daily pay must be in range [0, 100'0000]" ); // TODO
+
+         _gstate.min_pervote_daily_pay = min_vpay;
+      } else if ( name == "min_activated_stake") {
+         auto min_activated_stake = std::stoll(value);
+
+         eosio_assert( min_activated_stake >= 0 && min_activated_stake <= 150'000'000'0000, "minimum activated stake must be in range [0, 150'000'000'0000]" ); // TODO
+
+         _gstate.min_activated_stake = min_activated_stake;
+      } else if ( name == "continuous_rate") {
+         auto rate = static_cast<double>(std::stoi(value)) / 1e6;
+
+         eosio_assert( rate >= 0 && rate <= 1, "continuous rate must be in range [0, 1]" ); // TODO
+
+         _gstate.continuous_rate = rate;
+      } else if ( name == "to_producers_rate") {
+         auto rate = static_cast<double>(std::stoi(value)) / 1e6;
+
+         eosio_assert( rate >= 0 && rate <= 1, "to_producers_rate must be in range [0, 1]" ); // TODO
+
+         _gstate.to_producers_rate = rate;
+      } else if ( name == "to_bpay_rate") {
+         auto rate = static_cast<double>(std::stoi(value)) / 1e6;
+
+         eosio_assert( rate >= 0 && rate <= 1, "to_bpay_rate must be in range [0, 1]" ); // TODO
+
+         _gstate.to_bpay_rate = rate;
+      } else if ( name == "refund_delay_sec" ) {
+         auto refund_delay_sec = std::stoul(value);
+
+         eosio_assert(refund_delay_sec >= 0 && refund_delay_sec <= std::numeric_limits<uint32_t>::max(), "refund_delay_sec must be uint32_t");
+
+         _gstate.refund_delay_sec = static_cast<uint32_t>(refund_delay_sec);
+      } else if ( name == "ram_gift_bytes" ) {
+         auto ram_gift_bytes = std::stoll(value);
+
+         eosio_assert( ram_gift_bytes >= _gstate.ram_gift_bytes, "ram_gift_bytes cannot be reduced" );
+
+         _gstate.ram_gift_bytes = static_cast<uint64_t>(ram_gift_bytes);
+      }
+   }
+
+   void system_contract::setmrs( int64_t cpu_us, int64_t net_bytes, int64_t ram_bytes){
+      require_auth(_self);
+      set_minimum_resource_security(ram_bytes, net_bytes, cpu_us);
+   }
+
    void system_contract::updtbwlist(uint8_t type, const std::vector<std::string>& add, const std::vector<std::string>& rmv) {
+      require_auth(_self);
       update_blackwhitelist();
    }
 } /// eosio.system
@@ -456,11 +538,12 @@ EOSIO_DISPATCH( eosiosystem::system_contract,
      (newaccount)(updateauth)(deleteauth)(linkauth)(unlinkauth)(canceldelay)(onerror)(setabi)
      // eosio.system.cpp
      (init)(setram)(setramrate)(setparams)(setpriv)(setalimits)(setacctram)(setacctnet)(setacctcpu)
-     (rmvproducer)(updtrevision)(bidname)(bidrefund)(updtbwlist)
+     (rmvproducer)(updtrevision)(bidname)(bidrefund)
+     (setglobal)(setmrs)(updtbwlist)
      // delegate_bandwidth.cpp
      (buyrambytes)(buyram)(sellram)(delegatebw)(undelegatebw)(refund)
      // voting.cpp
      (regproducer)(unregprod)(voteproducer)(regproxy)
      // producer_pay.cpp
-     (onblock)(claimrewards)
+     (onblock)(claimrewards)(claimbonus)
 )
