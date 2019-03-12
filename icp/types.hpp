@@ -1,8 +1,8 @@
 #pragma once
 
+#include <optional>
 #include <eosiolib/eosio.hpp>
 #include <eosiolib/time.hpp>
-#include <eosiolib/optional.hpp>
 #include <eosiolib/producer_schedule.hpp>
 #include <eosiolib/transaction.hpp>
 #include <eosiolib/icp.hpp>
@@ -57,7 +57,7 @@ struct block_header {
     checksum256 action_mroot; // merkle root of actions
 
     uint32_t schedule_version; // new version of proposed producer set
-    optional<producer_schedule> new_producers; // new proposed producer set
+    std::optional<producer_schedule> new_producers; // new proposed producer set
 
     extensions_type header_extensions;
 
