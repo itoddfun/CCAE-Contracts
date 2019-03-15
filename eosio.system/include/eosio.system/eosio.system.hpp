@@ -91,6 +91,7 @@ namespace eosiosystem {
       uint8_t              max_producer_schedule_size = 21;
       int64_t              min_pervote_daily_pay      = 100'0000;
       int64_t              min_activated_stake        = 150'000'000'0000;
+      int64_t              useconds_per_day           = 24 * 3600 * int64_t(1000000); // redefine meaning of `day` to regulate something
       double              continuous_rate            = 0.04879; // 5% annual rate
       double              to_producers_rate          = 0.2;
       double              to_bpay_rate               = 0.25; // producer block pay rate with regard to producers pay
@@ -104,7 +105,8 @@ namespace eosiosystem {
                                 (last_producer_schedule_update)(last_pervote_bucket_fill)
                                 (pervote_bucket)(perblock_bucket)(total_unpaid_blocks)(total_activated_stake)(thresh_activated_stake_time)
                                 (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close)
-                                (max_producer_schedule_size)(min_pervote_daily_pay)(min_activated_stake)(continuous_rate)
+                                (max_producer_schedule_size)(min_pervote_daily_pay)(min_activated_stake)
+                                (useconds_per_day)(continuous_rate)
                                 (to_producers_rate)(to_bpay_rate)(to_voter_bonus_rate)
                                 (refund_delay_sec)(ram_gift_bytes) )
    };

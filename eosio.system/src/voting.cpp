@@ -288,7 +288,7 @@ namespace eosiosystem {
             });
             auto prod2 = _producers2.find( pd.first.value );
             if( prod2 != _producers2.end() ) {
-               const auto last_claim_plus_3days = pitr->last_claim_time + microseconds(3 * useconds_per_day);
+               const auto last_claim_plus_3days = pitr->last_claim_time + microseconds(3 * _gstate.useconds_per_day);
                bool crossed_threshold       = (last_claim_plus_3days <= ct);
                bool updated_after_threshold = (last_claim_plus_3days <= prod2->last_votepay_share_update);
                // Note: updated_after_threshold implies cross_threshold
@@ -382,7 +382,7 @@ namespace eosiosystem {
                });
                auto prod2 = _producers2.find( acnt.value );
                if ( prod2 != _producers2.end() ) {
-                  const auto last_claim_plus_3days = prod.last_claim_time + microseconds(3 * useconds_per_day);
+                  const auto last_claim_plus_3days = prod.last_claim_time + microseconds(3 * _gstate.useconds_per_day);
                   bool crossed_threshold       = (last_claim_plus_3days <= ct);
                   bool updated_after_threshold = (last_claim_plus_3days <= prod2->last_votepay_share_update);
                   // Note: updated_after_threshold implies cross_threshold

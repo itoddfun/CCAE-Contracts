@@ -488,6 +488,12 @@ namespace eosiosystem {
          eosio_assert( min_activated_stake >= 0 && min_activated_stake <= 150'000'000'0000, "minimum activated stake must be in range [0, 150'000'000'0000]" ); // TODO
 
          _gstate.min_activated_stake = min_activated_stake;
+      } else if ( name == "useconds_per_day") {
+         auto useconds_per_day = std::stoll(value);
+
+         eosio_assert( useconds_per_day > 0, "useconds_per_day must be > 0" );
+
+         _gstate.useconds_per_day = useconds_per_day;
       } else if ( name == "continuous_rate") {
          auto rate = static_cast<double>(std::stoi(value)) / 1e6;
 

@@ -13,7 +13,7 @@ namespace eosiosystem {
    const uint32_t seconds_per_year      = 52*7*24*3600;
    const uint32_t blocks_per_day        = 2 * 24 * 3600;
    const uint32_t blocks_per_hour       = 2 * 3600;
-   const int64_t  useconds_per_day      = 24 * 3600 * int64_t(1000000);
+   // const int64_t  useconds_per_day      = 24 * 3600 * int64_t(1000000);
    const int64_t  useconds_per_year     = seconds_per_year*1000000ll;
 
    void system_contract::onblock( ignore<block_header> ) {
@@ -60,9 +60,9 @@ namespace eosiosystem {
             auto highest = idx.lower_bound( std::numeric_limits<uint64_t>::max()/2 );
             if( highest != idx.end() &&
                 highest->high_bid > 0 &&
-                (current_time_point() - highest->last_bid_time) > microseconds(useconds_per_day) &&
+                (current_time_point() - highest->last_bid_time) > microseconds(_gstate.useconds_per_day) &&
                 _gstate.thresh_activated_stake_time > time_point() &&
-                (current_time_point() - _gstate.thresh_activated_stake_time) > microseconds(14 * useconds_per_day)
+                (current_time_point() - _gstate.thresh_activated_stake_time) > microseconds(14 * _gstate.useconds_per_day)
             ) {
                _gstate.last_name_close = timestamp;
                idx.modify( highest, same_payer, [&]( auto& b ){
@@ -85,7 +85,7 @@ namespace eosiosystem {
 
       const auto ct = current_time_point();
 
-      eosio_assert( ct - prod.last_claim_time > microseconds(useconds_per_day), "already claimed rewards within past day" );
+      eosio_assert( ct - prod.last_claim_time > microseconds(_gstate.useconds_per_day), "already claimed rewards within past day" );
 
       const asset token_supply   = eosio::token::get_supply(token_account, core_symbol().code() );
       const auto usecs_since_last_fill = (ct - _gstate.last_pervote_bucket_fill).count();
@@ -127,7 +127,7 @@ namespace eosiosystem {
 
       /// New metric to be used in pervote pay calculation. Instead of vote weight ratio, we combine vote weight and
       /// time duration the vote weight has been held into one metric.
-      const auto last_claim_plus_3days = prod.last_claim_time + microseconds(3 * useconds_per_day);
+      const auto last_claim_plus_3days = prod.last_claim_time + microseconds(3 * _gstate.useconds_per_day);
 
       bool crossed_threshold       = (last_claim_plus_3days <= ct);
       bool updated_after_threshold = true;
@@ -226,7 +226,7 @@ namespace eosiosystem {
       const auto& voter = _voters.get(owner.value);
 
       const auto ct = current_time_point();
-      eosio_assert( ct - voter.last_change_time > microseconds(useconds_per_day), "already claimed bonus or voted producers or delegated/undelegated within past day" );
+      eosio_assert( ct - voter.last_change_time > microseconds(_gstate.useconds_per_day), "already claimed bonus or voted producers or delegated/undelegated within past day" );
 
       double vote_weight = voter.last_vote_weight;
       if (voter.is_proxy) {
@@ -249,10 +249,11 @@ namespace eosiosystem {
       int64_t amount = 0;
       for (auto& p: producers) {
          const auto& producer = _producers.get(p.value);
-         const auto& voterbonus = _voterbonus.get(p.value);
-         auto delta = static_cast<int64_t>(voterbonus.balance.amount * vote_weight / producer.total_votes);
+         const auto& voterbonus = _voterbonus.find(p.value);
+         if (voterbonus == _voterbonus.end()) continue;
+         auto delta = static_cast<int64_t>(voterbonus->balance.amount * vote_weight / producer.total_votes);
          if (delta <= 0) continue;
-         _voterbonus.modify( voterbonus, same_payer, [&]( auto& vb ) {
+         _voterbonus.modify( *voterbonus, same_payer, [&]( auto& vb ) {
              vb.balance -= asset(delta, core_symbol());
          });
          amount += delta;
