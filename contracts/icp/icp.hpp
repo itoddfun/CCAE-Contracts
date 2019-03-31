@@ -56,7 +56,7 @@ private:
    bytes extract_action(const icpaction& ia, const capi_name& name, incoming_type type);
    void update_peer();
 
-   void set_last_incoming_block_num(const checksum256& id, incoming_type type);
+   void set_last_incoming_block_num(const capi_checksum256& id, incoming_type type);
 
    void meter_add_packets(uint32_t num);
    void meter_remove_packets(uint32_t num = std::numeric_limits<uint32_t>::max());

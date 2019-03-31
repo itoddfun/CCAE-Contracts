@@ -13,8 +13,11 @@ using eosio::const_mem_fun;
 using eosio::indexed_by;
 using eosio::singleton;
 
-key256 to_key256(const checksum256& c) {
-    return key256(c.get_array());
+key256 to_key256(const capi_checksum256& c) {
+    std::array<uint128_t, 2> a;
+    std::copy(c.hash, c.hash+16, reinterpret_cast<uint8_t*>(&a[0]));
+    std::copy(c.hash+16, c.hash+32, reinterpret_cast<uint8_t*>(&a[1]));
+    return key256(a);
 }
 
 using stored_block_header_ptr = std::shared_ptr<struct stored_block_header>;
@@ -24,16 +27,16 @@ using stored_block_header_state_ptr = std::shared_ptr<struct stored_block_header
 struct [[eosio::table, eosio::contract("icp")]] stored_block_header {
     uint64_t pk;
 
-    checksum256 id;
+    capi_checksum256 id;
     uint32_t block_num;
 
-    checksum256 previous;
+    capi_checksum256 previous;
 
-    checksum256 action_mroot = checksum256{};
+    capi_checksum256 action_mroot = capi_checksum256{};
 
     bool has_action_mroot() const {
-        checksum256 zeros{};
-        return action_mroot != zeros;
+        uint8_t zero[32] = {};
+        return !std::equal(std::cbegin(action_mroot.hash), std::cend(action_mroot.hash), std::cbegin(zero), std::cend(zero));
     }
 
     auto primary_key() const { return pk; }
@@ -52,10 +55,10 @@ typedef multi_index<"block"_n, stored_block_header,
 struct [[eosio::table, eosio::contract("icp")]] stored_block_header_state {
     uint64_t pk;
 
-    checksum256 id;
+    capi_checksum256 id;
     uint32_t block_num;
 
-    checksum256 previous;
+    capi_checksum256 previous;
 
     uint32_t dpos_irreversible_blocknum;
     uint32_t bft_irreversible_blocknum;
@@ -89,7 +92,7 @@ typedef singleton<"activesched"_n, stored_producer_schedule> producer_schedule_s
 
 struct [[eosio::table("pendingsched"), eosio::contract("icp")]] pending_schedule {
    uint32_t pending_schedule_lib_num; // TODO
-   checksum256 pending_schedule_hash; // TODO
+   capi_checksum256 pending_schedule_hash; // TODO
    bytes pending_schedule;
 };
 typedef singleton<"pendingsched"_n, pending_schedule> pending_schedule_singleton;
@@ -109,19 +112,19 @@ public:
     void init_seed_block(const block_header_state& block_state);
     void reset(uint8_t clear_all, uint32_t max_num);
     void set_max_blocks(uint32_t max);
-    void add_block_header_with_merkle_path(const block_header_state& h, const vector<checksum256>& merkle_path);
+    void add_block_header_with_merkle_path(const block_header_state& h, const vector<capi_checksum256>& merkle_path);
     void add_block_header(const block_header& h);
     void cutdown(uint32_t block_num, uint32_t& max_num);
-    checksum256 get_action_mroot(const checksum256& block_id);
+    capi_checksum256 get_action_mroot(const capi_checksum256& block_id);
 
 private:
     bool is_producer(name name, const eosio::public_key& key);
     producer_schedule get_producer_schedule();
-    incremental_merkle get_block_mroot(const checksum256& block_id);
+    incremental_merkle get_block_mroot(const capi_checksum256& block_id);
     void validate_block_state(const block_header_state& block_state);
     void add_block_state(const block_header_state& block_state);
     template <typename Index>
-    void add_block_id(const Index& by_blockid_index, const checksum256& block_id, const checksum256& previous) {
+    void add_block_id(const Index& by_blockid_index, const capi_checksum256& block_id, const capi_checksum256& previous) {
       eosio_assert(by_blockid_index.find(to_key256(block_id)) == by_blockid_index.end(), "already existing block");
 
       _blocks.emplace(_code, [&](auto& o) {
@@ -135,7 +138,7 @@ private:
     void update_active_schedule(const producer_schedule &schedule, bool clear_pending = true);
     void set_pending_schedule(uint32_t lib_num, const digest_type& hash, const producer_schedule& schedule);
     void prune(const stored_block_header_state& block_state);
-    void remove(const checksum256& id);
+    void remove(const capi_checksum256& id);
 
     void meter_add_blocks(uint32_t num);
     void meter_remove_blocks(uint32_t num = std::numeric_limits<uint32_t>::max());

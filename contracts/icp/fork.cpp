@@ -78,7 +78,7 @@ void fork_store::reset(uint8_t clear_all, uint32_t max_num) {
     }
 }
 
-void fork_store::add_block_header_with_merkle_path(const block_header_state& h, const vector<checksum256>& merkle_path) {
+void fork_store::add_block_header_with_merkle_path(const block_header_state& h, const vector<capi_checksum256>& merkle_path) {
     validate_block_state(h);
 
     // Validate producer schedule change
@@ -99,7 +99,7 @@ void fork_store::add_block_header_with_merkle_path(const block_header_state& h, 
     }
 
     // To allow following block headers discontinuously, the skipped block ids should be used to compose the merkle proof
-    checksum256 prev_id = merkle_path.empty() ? h.header.previous : merkle_path.front();
+    capi_checksum256 prev_id = merkle_path.empty() ? h.header.previous : merkle_path.front();
     auto mroot = get_block_mroot(prev_id); // first
     mroot.append(prev_id);
     if (!merkle_path.empty()) {
@@ -207,7 +207,7 @@ void fork_store::cutdown(uint32_t block_num, uint32_t& max_num) {
 }
 
 // Remove specified block and all its successive blocks
-void fork_store::remove(const checksum256& id) {
+void fork_store::remove(const capi_checksum256& id) {
     vector<key256> remove_queue{to_key256(id)};
     uint32_t num = 0;
 
@@ -257,7 +257,7 @@ void fork_store::add_block_header(const block_header& h) {
     });
 }
 
-/* void fork_store::add_block_id(const checksum256& block_id, const checksum256& previous) {
+/* void fork_store::add_block_id(const capi_checksum256& block_id, const capi_checksum256& previous) {
     auto by_blockid = _blocks.get_index<"blockid"_n>();
     eosio_assert(by_blockid.find(to_key256(block_id)) == by_blockid.end(), "already existing block");
 
@@ -301,13 +301,13 @@ void fork_store::set_pending_schedule(uint32_t lib_num, const digest_type& hash,
     _pending_schedule.set(s, _code);
 }
 
-incremental_merkle fork_store::get_block_mroot(const checksum256& block_id) {
+incremental_merkle fork_store::get_block_mroot(const capi_checksum256& block_id) {
     auto by_blockid = _block_states.get_index<"blockid"_n>();
     auto b = by_blockid.get(to_key256(block_id), "by_blockid unable to get");
     return unpack<incremental_merkle>(b.blockroot_merkle);
 }
 
-checksum256 fork_store::get_action_mroot(const checksum256& block_id) {
+capi_checksum256 fork_store::get_action_mroot(const capi_checksum256& block_id) {
     auto by_blockid = _blocks.get_index<"blockid"_n>();
     auto b = by_blockid.get(to_key256(block_id), "by_blockid unable to get");
     eosio_assert(b.has_action_mroot(), "incomplete block");

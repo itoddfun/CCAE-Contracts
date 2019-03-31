@@ -2,19 +2,19 @@
 
 namespace eosio {
 
-   uint32_t block_header::num_from_id(const checksum256& id)
+   uint32_t block_header::num_from_id(const capi_checksum256& id)
    {
-      return endian_reverse_u32(uint32_t(*reinterpret_cast<const uint64_t*>(id.data())));
+      return endian_reverse_u32(uint32_t(*reinterpret_cast<const uint64_t*>(id.hash)));
    }
 
    uint32_t block_header::block_num() const {
       return num_from_id(previous) + 1;
    }
 
-   checksum256 block_header::id() const {
+   capi_checksum256 block_header::id() const {
       auto result = sha256(*this);
-      *reinterpret_cast<uint64_t*>(result.data()) &= 0xffffffff00000000;
-      *reinterpret_cast<uint64_t*>(result.data()) += endian_reverse_u32(block_num());
+      *reinterpret_cast<uint64_t*>(result.hash) &= 0xffffffff00000000;
+      *reinterpret_cast<uint64_t*>(result.hash) += endian_reverse_u32(block_num());
       return result;
    }
 
@@ -22,14 +22,14 @@ namespace eosio {
       return sha256(*this);
    }
 
-   checksum256 block_header_state::sig_digest() const {
+   capi_checksum256 block_header_state::sig_digest() const {
       auto header_bmroot = sha256(std::make_pair(header.digest(), blockroot_merkle.get_root()));
       return sha256(std::make_pair(header_bmroot, pending_schedule_hash));
    }
 
    void block_header_state::validate() const {
       auto d = sig_digest();
-      assert_recover_key(d, header.producer_signature, block_signing_key);
+      assert_recover_key(checksum256{d.hash}, header.producer_signature, block_signing_key);
 
       eosio_assert(header.id() == id, "invalid block id"); // TODO: necessary?
    }

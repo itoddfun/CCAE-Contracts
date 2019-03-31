@@ -30,17 +30,17 @@ bool operator!=(const producer_key& lhs, const producer_key& rhs) {
     return std::tie(lhs.producer_name, lhs.block_signing_key) != std::tie(rhs.producer_name, rhs.block_signing_key);
 }
 
-/* bool operator==(const checksum256& lhs, const checksum256& rhs) {
+bool operator==(const capi_checksum256& lhs, const capi_checksum256& rhs) {
     return std::equal(std::cbegin(lhs.hash), std::cend(lhs.hash), std::cbegin(rhs.hash), std::cend(rhs.hash));
-} */
+}
 
-/* bool operator!=(const checksum256& lhs, const checksum256& rhs) {
+bool operator!=(const capi_checksum256& lhs, const capi_checksum256& rhs) {
     return !std::equal(std::cbegin(lhs.hash), std::cend(lhs.hash), std::cbegin(rhs.hash), std::cend(rhs.hash));
-} */
+}
 
 using boost::container::flat_map;
 
-using checksum256_ptr = std::shared_ptr<checksum256>;
+using capi_checksum256_ptr = std::shared_ptr<capi_checksum256>;
 using producer_schedule_ptr = std::shared_ptr<producer_schedule>;
 
 struct block_header {
@@ -51,19 +51,19 @@ struct block_header {
     // NOTE: useless in EOS now
     uint16_t confirmed;
 
-    checksum256 previous;
+    capi_checksum256 previous;
 
-    checksum256 transaction_mroot; // merkle root of transactions
-    checksum256 action_mroot; // merkle root of actions
+    capi_checksum256 transaction_mroot; // merkle root of transactions
+    capi_checksum256 action_mroot; // merkle root of actions
 
     uint32_t schedule_version; // new version of proposed producer set
     std::optional<producer_schedule> new_producers; // new proposed producer set
 
     extensions_type header_extensions;
 
-    static uint32_t num_from_id(const checksum256& id);
+    static uint32_t num_from_id(const capi_checksum256& id);
     uint32_t block_num() const;
-    checksum256 id() const;
+    capi_checksum256 id() const;
     digest_type digest() const;
 
    // explicit serialization macro is not necessary, used here only to improve compilation time
@@ -75,9 +75,9 @@ struct block_header {
 using block_header_ptr = std::shared_ptr<block_header>;
 
 struct header_confirmation {
-    checksum256 block_id;
+    capi_checksum256 block_id;
     name producer;
-    checksum256 producer_signature;
+    capi_checksum256 producer_signature;
 
    // explicit serialization macro is not necessary, used here only to improve compilation time
    EOSLIB_SERIALIZE(header_confirmation, (block_id)(producer)(producer_signature))
@@ -90,14 +90,14 @@ struct signed_block_header : block_header {
 };
 
 struct block_header_state {
-    checksum256 id;
+    capi_checksum256 id;
     uint32_t block_num;
 
     signed_block_header header;
 
     // participate in signing process
     incremental_merkle blockroot_merkle; // merkle root of block ids
-    checksum256 pending_schedule_hash; // hash of producer schedule set
+    capi_checksum256 pending_schedule_hash; // hash of producer schedule set
 
     // public key of producer who produced this block
     eosio::public_key block_signing_key;
@@ -118,7 +118,7 @@ struct block_header_state {
     vector<uint8_t> confirm_count;
     vector<header_confirmation> confirmations;
 
-    checksum256 sig_digest() const;
+    capi_checksum256 sig_digest() const;
     void validate() const;
 
     producer_key get_scheduled_producer(block_timestamp_type t) const;
@@ -156,7 +156,7 @@ struct block_header_with_merkle_path {
     block_header_state block_header;
     // First id must exist in `fork_store`, and the subsequent ids are linked one by one,
     // and the last one is exactly the previous id of `block_header`
-    vector<checksum256> merkle_path;
+    vector<capi_checksum256> merkle_path;
 
     // void validate(const digest_type& root) const;
 
@@ -182,7 +182,7 @@ struct action_receipt {
 struct icpaction {
    bytes action;
    bytes action_receipt;
-   checksum256 block_id;
+   capi_checksum256 block_id;
    bytes merkle_path;
 
    // explicit serialization macro is not necessary, used here only to improve compilation time

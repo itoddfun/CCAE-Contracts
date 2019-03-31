@@ -12,22 +12,22 @@ namespace eosio {
 
 digest_type make_canonical_left(const digest_type& val) {
     digest_type canonical_l = val;
-    *reinterpret_cast<uint64_t*>(canonical_l.data()) &= 0xFFFFFFFFFFFFFF7FULL;
+    *reinterpret_cast<uint64_t*>(canonical_l.hash) &= 0xFFFFFFFFFFFFFF7FULL;
     return canonical_l;
 }
 
 digest_type make_canonical_right(const digest_type& val) {
     digest_type canonical_r = val;
-    *reinterpret_cast<uint64_t*>(canonical_r.data()) |= 0x0000000000000080ULL;
+    *reinterpret_cast<uint64_t*>(canonical_r.hash) |= 0x0000000000000080ULL;
     return canonical_r;
 }
 
 bool is_canonical_left(const digest_type& val) {
-    return (*reinterpret_cast<const uint64_t*>(val.data()) & 0x0000000000000080ULL) == 0;
+    return (*reinterpret_cast<const uint64_t*>(val.hash) & 0x0000000000000080ULL) == 0;
 }
 
 bool is_canonical_right(const digest_type& val) {
-    return (*reinterpret_cast<const uint64_t*>(val.data()) & 0x0000000000000080ULL) != 0;
+    return (*reinterpret_cast<const uint64_t*>(val.hash) & 0x0000000000000080ULL) != 0;
 }
 
 digest_type merkle(vector<digest_type> ids) {

@@ -109,7 +109,7 @@ void icp::sendaction(uint64_t seq, const bytes& send_action, uint32_t expiration
    action(vector<permission_level>{}, _self, "ispacket"_n, packet).send();
 }
 
-void icp::set_last_incoming_block_num(const checksum256& id, incoming_type type) {
+void icp::set_last_incoming_block_num(const capi_checksum256& id, incoming_type type) {
    auto num = block_header::num_from_id(id);
    switch (type) {
       case incoming_type::packet: _peer.last_incoming_packet_block_num = num; break;
@@ -123,7 +123,7 @@ bytes icp::extract_action(const icpaction& ia, const capi_name& name, incoming_t
 
    auto action_mroot = _store->get_action_mroot(ia.block_id);
 
-   auto merkle_path = unpack<vector<checksum256>>(ia.merkle_path);
+   auto merkle_path = unpack<vector<capi_checksum256>>(ia.merkle_path);
    auto mroot = merkle(merkle_path); // TODO: merkle path computation optimization
    eosio_assert(mroot == action_mroot, "invalid actions merkle root");
 
