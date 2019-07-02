@@ -224,6 +224,14 @@ namespace eosiosystem {
        EOSLIB_SERIALIZE( voter_bonus, (producer)(balance))
    };
 
+   struct [[eosio::table, eosio::contract("eosio.system")]] privileged_account {
+       name account;
+
+       uint64_t primary_key()const { return account.value; }
+
+       EOSLIB_SERIALIZE( privileged_account, (account))
+   };
+
    typedef eosio::multi_index< "voters"_n, voter_info >  voters_table;
 
    typedef eosio::multi_index< "voterbonus"_n, voter_bonus > voter_bonus_table;
@@ -236,6 +244,8 @@ namespace eosiosystem {
    typedef eosio::singleton< "global"_n, eosio_global_state >   global_state_singleton;
    typedef eosio::singleton< "global2"_n, eosio_global_state2 > global_state2_singleton;
    typedef eosio::singleton< "global3"_n, eosio_global_state3 > global_state3_singleton;
+
+   typedef eosio::multi_index< "privileged"_n, privileged_account >  privileged_account_table;
 
    static constexpr uint32_t     seconds_per_day = 24 * 3600;
 
@@ -639,6 +649,11 @@ namespace eosiosystem {
           */
          [[eosio::action]]
          void updtbwlist(uint8_t type, const std::vector<std::string>& add, const std::vector<std::string>& rmv);
+
+         [[eosio::action]]
+         void addprvlgd(name account);
+         [[eosio::action]]
+         void rmvprvlgd(name account);
 
          using init_action = eosio::action_wrapper<"init"_n, &system_contract::init>;
          using setacctram_action = eosio::action_wrapper<"setacctram"_n, &system_contract::setacctram>;

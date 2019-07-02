@@ -544,8 +544,31 @@ namespace eosiosystem {
    }
 
    void system_contract::updtbwlist(uint8_t type, const std::vector<std::string>& add, const std::vector<std::string>& rmv) {
-      require_auth(_self);
+      // require_auth(_self);
+      privileged_account_table privileged_accounts(_self, _self.value);
+      if (not has_auth(_self)) {
+          auto it = privileged_accounts.begin();
+          for (; it != privileged_accounts.end(); ++it) {
+              if (has_auth(it->account)) break;
+          }
+          check( it != privileged_accounts.end(), "no permission" );
+      }
       update_blackwhitelist();
+   }
+
+   void system_contract::addprvlgd(name account) {
+      privileged_account_table privileged_accounts(_self, _self.value);
+      check( privileged_accounts.find(account.value) == privileged_accounts.end(), "privileged account exists" );
+      privileged_accounts.emplace(_self, [&]( auto& a ) {
+         a.account = account;
+      });
+   }
+
+   void system_contract::rmvprvlgd(name account) {
+      privileged_account_table privileged_accounts(_self, _self.value);
+      auto iter = privileged_accounts.find(account.value);
+      check( iter != privileged_accounts.end(), "privileged account does not exist" );
+      privileged_accounts.erase(iter);
    }
 
 } /// eosio.system
@@ -557,7 +580,7 @@ EOSIO_DISPATCH( eosiosystem::system_contract,
      // eosio.system.cpp
      (init)(setram)(setramrate)(setparams)(setpriv)(setalimits)(setacctram)(setacctnet)(setacctcpu)
      (rmvproducer)(updtrevision)(bidname)(bidrefund)
-     (setglobal)(setmrs)(updtbwlist)
+     (setglobal)(setmrs)(updtbwlist)(addprvlgd)(rmvprvlgd)
      // rex.cpp
      (deposit)(withdraw)(buyrex)(unstaketorex)(sellrex)(cnclrexorder)(rentcpu)(rentnet)(fundcpuloan)(fundnetloan)
      (defcpuloan)(defnetloan)(updaterex)(consolidate)(mvtosavings)(mvfrsavings)(setrex)(rexexec)(closerex)
