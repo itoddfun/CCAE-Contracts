@@ -557,6 +557,7 @@ namespace eosiosystem {
    }
 
    void system_contract::addprvlgd(name account) {
+      require_auth(_self);
       privileged_account_table privileged_accounts(_self, _self.value);
       check( privileged_accounts.find(account.value) == privileged_accounts.end(), "privileged account exists" );
       privileged_accounts.emplace(_self, [&]( auto& a ) {
@@ -565,6 +566,7 @@ namespace eosiosystem {
    }
 
    void system_contract::rmvprvlgd(name account) {
+      require_auth(_self);
       privileged_account_table privileged_accounts(_self, _self.value);
       auto iter = privileged_accounts.find(account.value);
       check( iter != privileged_accounts.end(), "privileged account does not exist" );
