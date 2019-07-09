@@ -168,7 +168,7 @@ namespace eosiosystem {
 
          _voters.modify( vitr, same_payer, [&]( auto& v ) {
             v.flags1 = set_field( v.flags1, voter_info::flags1_fields::ram_managed, false );
-            v.last_change_time = current_time_point();
+            //v.last_change_time = current_time_point();
          });
       } else {
          check( *ram_bytes >= 0, "not allowed to set RAM limit to unlimited" );
@@ -177,13 +177,13 @@ namespace eosiosystem {
          if ( vitr != _voters.end() ) {
             _voters.modify( vitr, same_payer, [&]( auto& v ) {
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::ram_managed, true );
-               v.last_change_time = current_time_point();
+               //v.last_change_time = current_time_point();
             });
          } else {
             _voters.emplace( account, [&]( auto& v ) {
                v.owner  = account;
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::ram_managed, true );
-               v.last_change_time = current_time_point();
+               //v.last_change_time = current_time_point();
             });
          }
 
@@ -215,7 +215,7 @@ namespace eosiosystem {
 
          _voters.modify( vitr, same_payer, [&]( auto& v ) {
             v.flags1 = set_field( v.flags1, voter_info::flags1_fields::net_managed, false );
-            v.last_change_time = current_time_point();
+            //v.last_change_time = current_time_point();
          });
       } else {
          check( *net_weight >= -1, "invalid value for net_weight" );
@@ -224,13 +224,13 @@ namespace eosiosystem {
          if ( vitr != _voters.end() ) {
             _voters.modify( vitr, same_payer, [&]( auto& v ) {
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::net_managed, true );
-               v.last_change_time = current_time_point();
+               //v.last_change_time = current_time_point();
             });
          } else {
             _voters.emplace( account, [&]( auto& v ) {
                v.owner  = account;
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::net_managed, true );
-               v.last_change_time = current_time_point();
+               //v.last_change_time = current_time_point();
             });
          }
 
@@ -262,7 +262,7 @@ namespace eosiosystem {
 
          _voters.modify( vitr, same_payer, [&]( auto& v ) {
             v.flags1 = set_field( v.flags1, voter_info::flags1_fields::cpu_managed, false );
-            v.last_change_time = current_time_point();
+            //v.last_change_time = current_time_point();
          });
       } else {
          check( *cpu_weight >= -1, "invalid value for cpu_weight" );
@@ -271,13 +271,13 @@ namespace eosiosystem {
          if ( vitr != _voters.end() ) {
             _voters.modify( vitr, same_payer, [&]( auto& v ) {
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::cpu_managed, true );
-               v.last_change_time = current_time_point();
+               //v.last_change_time = current_time_point();
             });
          } else {
             _voters.emplace( account, [&]( auto& v ) {
                v.owner  = account;
                v.flags1 = set_field( v.flags1, voter_info::flags1_fields::cpu_managed, true );
-               v.last_change_time = current_time_point();
+               //v.last_change_time = current_time_point();
             });
          }
 
@@ -474,7 +474,7 @@ namespace eosiosystem {
 
          check( rate >= 0 && rate <= 1, "to_voter_bonus_rate must be in range [0, 1]" ); // TODO
 
-         _gstate.to_voter_bonus_rate = rate;
+//         _gstate.to_voter_bonus_rate = rate;
          return;
       }
 
@@ -504,7 +504,7 @@ namespace eosiosystem {
 
          check( useconds_per_day > 0, "useconds_per_day must be > 0" );
 
-         _gstate.useconds_per_day = useconds_per_day;
+//         _gstate.useconds_per_day = useconds_per_day;
       } else if ( name == "continuous_rate") {
          auto rate = static_cast<double>(std::stoi(value)) / 1e6;
 
@@ -534,7 +534,7 @@ namespace eosiosystem {
 
          check( ram_gift_bytes >= _gstate.ram_gift_bytes, "ram_gift_bytes cannot be reduced" );
 
-         _gstate.ram_gift_bytes = static_cast<uint64_t>(ram_gift_bytes);
+//         _gstate.ram_gift_bytes = static_cast<uint64_t>(ram_gift_bytes);
       }
    }
 

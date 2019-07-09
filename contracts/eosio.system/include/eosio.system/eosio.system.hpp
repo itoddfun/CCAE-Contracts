@@ -24,6 +24,9 @@
 // be set to 0.
 #define CHANNEL_RAM_AND_NAMEBID_FEES_TO_REX 1
 
+#define TIME_TO_I64(x)   (x.time_since_epoch().count())
+#define I64_TO_TIME(x)   (time_point(microseconds((int64_t)(x))))
+
 namespace eosiosystem {
 
    using eosio::name;
@@ -89,12 +92,12 @@ namespace eosiosystem {
       int64_t              total_ram_stake = 0;
 
       block_timestamp      last_producer_schedule_update;
-      time_point           last_pervote_bucket_fill;
+      uint64_t           last_pervote_bucket_fill;
       int64_t              pervote_bucket = 0;
       int64_t              perblock_bucket = 0;
       uint32_t             total_unpaid_blocks = 0; /// all blocks which have been produced but not paid
       int64_t              total_activated_stake = 0;
-      time_point           thresh_activated_stake_time;
+      uint64_t           thresh_activated_stake_time;
       uint16_t             last_producer_schedule_size = 0;
       double               total_producer_vote_weight = 0; /// the sum of all producer votes
       block_timestamp      last_name_close;
@@ -102,13 +105,13 @@ namespace eosiosystem {
       uint8_t              max_producer_schedule_size = 21;
       int64_t              min_pervote_daily_pay      = 100'0000;
       int64_t              min_activated_stake        = 150'000'000'0000;
-      int64_t              useconds_per_day           = 24 * 3600 * int64_t(1000000); // redefine meaning of `day` to regulate something
+      const static int64_t      useconds_per_day           = 24 * 3600 * int64_t(1000000); // redefine meaning of `day` to regulate something
       double              continuous_rate            = 0.04879; // 5% annual rate
       double              to_producers_rate          = 0.2;
       double              to_bpay_rate               = 0.25; // producer block pay rate with regard to producers pay
-      double              to_voter_bonus_rate        = 0; // voter bonus rate with regard to producer voting pay
-      uint32_t             refund_delay_sec           = 3*24*3600;
-      int64_t              ram_gift_bytes             = 1400;
+      static constexpr double       to_voter_bonus_rate        = 0; // voter bonus rate with regard to producer voting pay
+      uint32_t            refund_delay_sec           = 3*24*3600;
+      const static int64_t      ram_gift_bytes             = 1400;
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
       EOSLIB_SERIALIZE_DERIVED( eosio_global_state, eosio::blockchain_parameters,
@@ -117,9 +120,9 @@ namespace eosiosystem {
                                 (pervote_bucket)(perblock_bucket)(total_unpaid_blocks)(total_activated_stake)(thresh_activated_stake_time)
                                 (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close)
                                 (max_producer_schedule_size)(min_pervote_daily_pay)(min_activated_stake)
-                                (useconds_per_day)(continuous_rate)
-                                (to_producers_rate)(to_bpay_rate)(to_voter_bonus_rate)
-                                (refund_delay_sec)(ram_gift_bytes) )
+                                (continuous_rate)
+                                (to_producers_rate)(to_bpay_rate)
+                                (refund_delay_sec))
    };
 
    /**
@@ -197,7 +200,7 @@ namespace eosiosystem {
       double              proxied_vote_weight= 0; /// the total vote weight delegated to this voter as a proxy
       bool                is_proxy = 0; /// whether the voter is a proxy for others
 
-      time_point          last_change_time;
+      //time_point          last_change_time;
 
       uint32_t            flags1 = 0;
       uint32_t            reserved2 = 0;
@@ -212,7 +215,7 @@ namespace eosiosystem {
       };
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( voter_info, (owner)(proxy)(producers)(staked)(last_vote_weight)(proxied_vote_weight)(is_proxy)(last_change_time)(flags1)(reserved2)(reserved3) )
+      EOSLIB_SERIALIZE( voter_info, (owner)(proxy)(producers)(staked)(last_vote_weight)(proxied_vote_weight)(is_proxy)(flags1)(reserved2)(reserved3) )
    };
 
    struct [[eosio::table, eosio::contract("eosio.system")]] voter_bonus {

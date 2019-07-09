@@ -2,6 +2,7 @@
 
 #include <eosio.token/eosio.token.hpp>
 
+
 namespace eosiosystem {
 
    // const int64_t  min_pervote_daily_pay = 100'0000;
@@ -34,8 +35,8 @@ namespace eosiosystem {
       if( _gstate.total_activated_stake < _gstate.min_activated_stake )
          return;
 
-      if( _gstate.last_pervote_bucket_fill == time_point() )  /// start the presses
-         _gstate.last_pervote_bucket_fill = current_time_point();
+      if( _gstate.last_pervote_bucket_fill == TIME_TO_I64(time_point()) )  /// start the presses
+         _gstate.last_pervote_bucket_fill = TIME_TO_I64(current_time_point());
 
 
       /**
@@ -61,8 +62,8 @@ namespace eosiosystem {
             if( highest != idx.end() &&
                 highest->high_bid > 0 &&
                 (current_time_point() - highest->last_bid_time) > microseconds(_gstate.useconds_per_day) &&
-                _gstate.thresh_activated_stake_time > time_point() &&
-                (current_time_point() - _gstate.thresh_activated_stake_time) > microseconds(14 * _gstate.useconds_per_day)
+                _gstate.thresh_activated_stake_time > TIME_TO_I64(time_point()) &&
+                (current_time_point() - I64_TO_TIME(_gstate.thresh_activated_stake_time)) > microseconds(14 * _gstate.useconds_per_day)
             ) {
                _gstate.last_name_close = timestamp;
                channel_namebid_to_rex( highest->high_bid );
@@ -89,9 +90,9 @@ namespace eosiosystem {
       check( ct - prod.last_claim_time > microseconds(_gstate.useconds_per_day), "already claimed rewards within past day" );
 
       const asset token_supply   = eosio::token::get_supply(token_account, core_symbol().code() );
-      const auto usecs_since_last_fill = (ct - _gstate.last_pervote_bucket_fill).count();
+      const auto usecs_since_last_fill = (ct - I64_TO_TIME(_gstate.last_pervote_bucket_fill)).count();
 
-      if( usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > time_point() ) {
+      if( usecs_since_last_fill > 0 && I64_TO_TIME(_gstate.last_pervote_bucket_fill) > time_point() ) {
          auto new_tokens = static_cast<int64_t>( (_gstate.continuous_rate * double(token_supply.amount) * double(usecs_since_last_fill)) / double(useconds_per_year) );
 
          auto to_producers      = static_cast<int64_t>( new_tokens * _gstate.to_producers_rate );
@@ -121,7 +122,7 @@ namespace eosiosystem {
 
          _gstate.pervote_bucket          += to_per_vote_pay;
          _gstate.perblock_bucket         += to_per_block_pay;
-         _gstate.last_pervote_bucket_fill = ct;
+         _gstate.last_pervote_bucket_fill = TIME_TO_I64(ct);
       }
 
       auto prod2 = _producers2.find( owner.value );
@@ -227,7 +228,7 @@ namespace eosiosystem {
       const auto& voter = _voters.get(owner.value);
 
       const auto ct = current_time_point();
-      check( ct - voter.last_change_time > microseconds(_gstate.useconds_per_day), "already claimed bonus or voted producers or delegated/undelegated within past day" );
+      check( ct - time_point(microseconds::maximum()) > microseconds(_gstate.useconds_per_day), "already claimed bonus or voted producers or delegated/undelegated within past day" );
 
       double vote_weight = voter.last_vote_weight;
       if (voter.is_proxy) {
@@ -244,7 +245,7 @@ namespace eosiosystem {
       }
 
       _voters.modify( voter, same_payer, [&]( auto& v ) {
-         v.last_change_time = ct;
+         //v.last_change_time = ct;
       });
 
       int64_t amount = 0;
